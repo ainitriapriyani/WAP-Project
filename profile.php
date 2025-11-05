@@ -112,5 +112,9 @@ $admin = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_admin));
     </div>
 </div>
 
+    <div class="text-center mt-4">
+        <p>Hubungi kami di: <strong>08123456789</strong></p>
+    </div>
+
 <?php include 'includes/footer.php'; ?>
 
