@@ -1,0 +1,47 @@
+services:
+
+  nginx:
+    image: nginx:latest
+    container_name: cake_nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+
+  php:
+    image: php:8.2-fpm
+    container_name: cake_php
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - mysql
+    command: bash -c "docker-php-ext-install mysqli && php-fpm"
+
+  mysql:
+    image: mysql:5.7
+    container_name: cake_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cake_shop
+    ports:
+      - "3310:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: cake_pma
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+
+volumes:
+  db_data:

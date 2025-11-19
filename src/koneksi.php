@@ -1,8 +1,8 @@
 <?php
 // Konfigurasi koneksi ke database
-$host = "localhost";       // default untuk XAMPP
+$host = "mysql";       // default untuk XAMPP
 $username = "root";        // default username XAMPP
-$password = "";            // default password XAMPP (kosong)
+$password = "root";            // default password XAMPP (kosong)
 $database = "cake_shop";   // sesuaikan sama nama database hasil import
 
 // Membuat koneksi
