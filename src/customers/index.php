@@ -1,113 +1,86 @@
 <?php
-// --- KODE DEBUGGING ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// --- AKHIR KODE DEBUGGING ---
+include '../koneksi.php';
 
-include '../includes/header.php';
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-// Mengambil semua data pelanggan dari database
-$query = "SELECT * FROM customers ORDER BY id DESC";
-$result = mysqli_query($koneksi, $query);
-?>
+    $nama     = trim($_POST['nama']);
+    $kategori = trim($_POST['kategori']);
+    $harga    = intval($_POST['harga']);
+    $stok     = intval($_POST['stok']);
+    $gambar   = '';
 
-<!-- Konten Utama -->
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Manajemen Pelanggan</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboard/">Dashboard</a></li>
-        <li class="breadcrumb-item active">Daftar Pelanggan</li>
-    </ol>
+    /* -----------------------------
+       VALIDASI & UPLOAD GAMBAR
+    ------------------------------ */
+    if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === 0) {
 
-    <?php
-    // Menampilkan notifikasi berdasarkan status dari URL
-    if (isset($_GET['status'])) {
-        $status = $_GET['status'];
-        $message = '';
-        $alert_type = '';
+        $folder = "../assets/img/";
+        $nama_file = uniqid() . "-" . basename($_FILES['gambar']['name']);
+        $lokasi = $folder . $nama_file;
 
-        switch ($status) {
-            case 'sukses_tambah':
-                $message = '<strong>Berhasil!</strong> Data pelanggan baru telah ditambahkan.';
-                $alert_type = 'success';
-                break;
-            case 'sukses_edit':
-                $message = '<strong>Berhasil!</strong> Data pelanggan telah diperbarui.';
-                $alert_type = 'success';
-                break;
-            case 'sukses_hapus':
-                $message = '<strong>Berhasil!</strong> Data pelanggan telah dihapus.';
-                $alert_type = 'success';
-                break;
-            case 'gagal':
-                $message = '<strong>Gagal!</strong> Terjadi kesalahan saat memproses data.';
-                $alert_type = 'danger';
-                break;
+        // Ekstensi yang diizinkan
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        $ext = strtolower(pathinfo($lokasi, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowed)) {
+            header("Location: tambah.php?status=tipe_file_salah");
+            exit;
         }
 
-        if ($message) {
-            echo '<div class="alert alert-' . $alert_type . ' alert-dismissible fade show" role="alert">'
-                . $message .
-                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>';
+        // Pindahkan file
+        if (move_uploaded_file($_FILES['gambar']['tmp_name'], $lokasi)) {
+            $gambar = $nama_file;
         }
     }
-    ?>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>
-                <i class="fas fa-users me-1"></i>
-                Data Pelanggan
-            </span>
-            <a href="tambah.php" class="btn btn-primary btn-sm">
-                <i class="fas fa-user-plus"></i> Tambah Pelanggan Baru
-            </a>
+    /* -----------------------------
+       INSERT DATA (PREPARED STATEMENT)
+    ------------------------------ */
+    $query = "INSERT INTO cakes (nama, kategori, harga, stok, gambar) 
+              VALUES (?, ?, ?, ?, ?)";
+    $stmt = mysqli_prepare($koneksi, $query);
+    mysqli_stmt_bind_param($stmt, "ssiss", $nama, $kategori, $harga, $stok, $gambar);
+    mysqli_stmt_execute($stmt);
+
+    header("Location: index.php?status=sukses_tambah");
+    exit;
+}
+
+include '../includes/header.php';
+?>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4 mb-4">Tambah Kue</h1>
+
+    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow">
+
+        <div class="mb-3">
+            <label class="form-label">Nama Kue</label>
+            <input type="text" name="nama" class="form-control" required>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center">No</th>
-                            <th>Nama Pelanggan</th>
-                            <th>Alamat</th>
-                            <th>Telepon</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (mysqli_num_rows($result) > 0) : ?>
-                            <?php $no = 1; ?>
-                            <?php while ($customer = mysqli_fetch_assoc($result)) : ?>
-                                <tr>
-                                    <td class="text-center"><?= $no++; ?></td>
-                                    <td><?= htmlspecialchars($customer['nama']); ?></td>
-                                    <td><?= htmlspecialchars($customer['alamat']); ?></td>
-                                    <td><?= htmlspecialchars($customer['telepon']); ?></td>
-                                    <td class="text-center">
-                                        <a href="edit.php?id=<?= $customer['id']; ?>" class="btn btn-warning btn-sm" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="hapus.php?id=<?= $customer['id']; ?>" class="btn btn-danger btn-sm" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus data pelanggan ini?');">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else : ?>
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">Belum ada data pelanggan.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+
+        <div class="mb-3">
+            <label class="form-label">Kategori</label>
+            <input type="text" name="kategori" class="form-control" required>
         </div>
-    </div>
+
+        <div class="mb-3">
+            <label class="form-label">Harga</label>
+            <input type="number" name="harga" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Stok</label>
+            <input type="number" name="stok" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Gambar</label>
+            <input type="file" name="gambar" class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Simpan</button>
+    </form>
 </div>
 
-<!-- Menyertakan footer -->
 <?php include '../includes/footer.php'; ?>
-

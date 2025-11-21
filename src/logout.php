@@ -1,17 +1,30 @@
 <?php
-// Selalu mulai session di awal
-session_start();
+// Mulai session hanya jika belum dimulai
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Hapus semua variabel session
-$_SESSION = array();
+// Hapus semua data session
+$_SESSION = [];
+
+// Hapus cookie session jika ada
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params["path"],
+        $params["domain"],
+        $params["secure"],
+        $params["httponly"]
+    );
+}
 
 // Hancurkan session
-if (session_destroy()) {
-    // Jika berhasil, redirect ke halaman login
-    header("Location: index.php");
-    exit();
-} else {
-    // Jika ada masalah (jarang terjadi), tampilkan pesan error
-    echo "Gagal untuk logout.";
-}
+session_destroy();
+
+// Redirect ke halaman login
+header("Location: index.php");
+exit();
 ?>

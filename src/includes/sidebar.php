@@ -1,10 +1,17 @@
 <style>
     /* Custom CSS "Pastel Style" untuk Sidebar */
-    #sidebar {
-        background: #ffffff; /* Latar belakang putih bersih */
-        color: #495057; /* Warna teks abu-abu tua */
-        border-right: 1px solid #dee2e6;
-    }
+ #sidebar {
+    background: #ffffff;
+    color: #495057;
+    border-right: 1px solid #dee2e6;
+
+    /* FIX klik tidak bisa */
+    position: fixed;
+    z-index: 9999;
+    height: 100vh;
+    overflow-y: auto;
+}
+
 
     #sidebar .sidebar-header {
         padding: 20px;
@@ -74,15 +81,16 @@
                 Dashboard
             </a>
         </li>
-        <li class="<?php echo (strpos($currentPage, 'cakes/') !== false) ? 'active' : ''; ?>">
-            <a href="<?php echo $base_path; ?>/cakes/">
-                <i class="fas fa-birthday-cake"></i>
+        <li class="<?php echo (strpos($currentPage, 'customers/') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo $base_path; ?>/customers/">
+            <i class="fas fa-birthday-cake"></i>    
+            
                 Cakes
             </a>
         </li>
-        <li class="<?php echo (strpos($currentPage, 'customers/') !== false) ? 'active' : ''; ?>">
-            <a href="<?php echo $base_path; ?>/customers/">
-                <i class="fas fa-users"></i>
+        <li class="<?php echo (strpos($currentPage, 'cakes/') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo $base_path; ?>/cakes/">
+            <i class="fas fa-users"></i>    
                 Customers
             </a>
         </li>

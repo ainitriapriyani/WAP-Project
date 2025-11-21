@@ -1,33 +1,28 @@
 <?php
-// Memulai session dan menyertakan file koneksi
 session_start();
 include '../koneksi.php';
 
-// Cek jika pengguna tidak login, redirect ke halaman login
+// Cek login
 if (!isset($_SESSION['username'])) {
     header("Location: ../index.php");
-    exit();
+    exit;
 }
 
-// Cek apakah ada ID di URL
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
+// Validasi ID
+$id = intval($_GET['id'] ?? 0);
 
-    // Query untuk menghapus data pelanggan
-    $query_delete = "DELETE FROM customers WHERE id = $id";
+if ($id < 1) {
+    header("Location: index.php?status=id_tidak_valid");
+    exit;
+}
 
-    if (mysqli_query($koneksi, $query_delete)) {
-        // Jika berhasil, redirect dengan status sukses
-        header("Location: index.php?status=sukses_hapus");
-        exit();
-    } else {
-        // Jika gagal, redirect dengan status gagal
-        header("Location: index.php?status=gagal");
-        exit();
-    }
+// Hapus data pelanggan
+$query = "DELETE FROM customers WHERE id = $id";
+
+if (mysqli_query($koneksi, $query)) {
+    header("Location: index.php?status=sukses_hapus");
 } else {
-    // Jika tidak ada ID, redirect ke halaman utama pelanggan
-    header("Location: index.php");
-    exit();
+    header("Location: index.php?status=gagal");
 }
-?>
+
+exit;
