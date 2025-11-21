@@ -39,48 +39,76 @@ if (!isset($_SESSION['username']) && !in_array($script_name, $allowed_pages)) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-        }
-        .wrapper {
-            display: flex;
-            width: 100%;
-            align-items: stretch;
-        }
-        #content {
-            width: 100%;
-            padding: 20px;
-            min-height: 100vh;
-            transition: all 0.3s;
-        }
-        .navbar-custom {
-            background-color: #ffffff;
-            border-bottom: 1px solid #dee2e6;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .navbar-custom .nav-link,
-        .navbar-custom .navbar-brand {
-            color: #495057;
-        }
-        #sidebarCollapse {
-            background-color: transparent;
-            border: none;
-            color: #e83e8c;
-            font-size: 1.5rem;
-        }
-        .card {
-            border: none;
-            border-radius: 0.75rem;
-        }
-        .card-header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #f0f0f0;
-            font-weight: 500;
-        }
-        .border-left-primary { border-left: .25rem solid #4e73df!important; }
-        .border-left-success { border-left: .25rem solid #1cc88a!important; }
-        .border-left-info { border-left: .25rem solid #36b9cc!important; }
+ /* === Apple Minimal Pastel Navbar === */
+.navbar-custom {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    border-bottom: 1px solid rgba(255, 170, 200, 0.25);
+
+    /* Soft floating shadow */
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+
+    padding: 10px 16px;
+    border-radius: 0 0 18px 18px;
+
+    transition: all 0.25s ease;
+}
+
+.navbar-custom:hover {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.07);
+}
+
+/* Navbar Text */
+.navbar-custom .nav-link,
+.navbar-custom .navbar-brand {
+    color: #4a4a4a;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Sidebar toggle button */
+#sidebarCollapse {
+    border: none;
+    font-size: 1.5rem;
+    color: #e83e8c;
+    background: transparent;
+
+    transition: all 0.2s ease;
+}
+
+#sidebarCollapse:hover {
+    transform: scale(1.1);
+    color: #ff5fa8;
+}
+
+/* User dropdown */
+.navbar-custom .dropdown-menu {
+    border-radius: 12px;
+    border: none;
+    padding: 8px 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.navbar-custom .dropdown-item {
+    padding: 10px 16px;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.navbar-custom .dropdown-item:hover {
+    background: #ffe6f4;
+    color: #e83e8c;
+}
+
+.navbar-custom .nav-link i {
+    color: #e83e8c;
+}
+
+
     </style>
 </head>
 <body>
@@ -92,25 +120,44 @@ if (!isset($_SESSION['username']) && !in_array($script_name, $allowed_pages)) {
     <!-- Page Content -->
     <div id="content">
 
-        <nav class="navbar navbar-expand-lg navbar-light navbar-custom mb-4">
-            <div class="container-fluid">
-                <button type="button" id="sidebarCollapse" class="btn">
-                    <i class="fas fa-align-left"></i>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i>
-                                <?php echo htmlspecialchars($_SESSION['username'] ?? 'Guest'); ?>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="<?php echo $base_path; ?>/profile.php"><i class="fas fa-user-edit me-2"></i>Ubah Password</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo $base_path; ?>/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+      <nav class="navbar navbar-expand-lg navbar-light navbar-custom mb-4">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+
+        <!-- Tombol Sidebar -->
+        <button type="button" id="sidebarCollapse" class="btn">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Profil User -->
+        <div class="dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center"
+               href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+
+                <i class="fas fa-user-circle fa-lg me-2"></i>
+                <span><?php echo htmlspecialchars($_SESSION['username'] ?? 'Guest'); ?></span>
+
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="<?php echo $base_path; ?>/profile.php">
+                        <i class="fas fa-user-edit me-2"></i>
+                        Ubah Password
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item" href="<?php echo $base_path; ?>/logout.php">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+    

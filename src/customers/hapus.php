@@ -2,27 +2,24 @@
 session_start();
 include '../koneksi.php';
 
-// Cek login
 if (!isset($_SESSION['username'])) {
     header("Location: ../index.php");
     exit;
 }
 
-// Validasi ID
 $id = intval($_GET['id'] ?? 0);
 
-if ($id < 1) {
-    header("Location: index.php?status=id_tidak_valid");
-    exit;
-}
+// Hapus data
+$stmt = $koneksi->prepare("DELETE FROM customers WHERE id=?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
 
-// Hapus data pelanggan
-$query = "DELETE FROM customers WHERE id = $id";
+/* --------------------------------
+   RAPIHKAN NOMOR ID MENJADI 1,2,3…
+----------------------------------*/
+$koneksi->query("SET @num := 0");
+$koneksi->query("UPDATE customers SET id = (@num := @num + 1) ORDER BY id");
+$koneksi->query("ALTER TABLE customers AUTO_INCREMENT = 1");
 
-if (mysqli_query($koneksi, $query)) {
-    header("Location: index.php?status=sukses_hapus");
-} else {
-    header("Location: index.php?status=gagal");
-}
-
+header("Location: index.php?status=sukses_hapus");
 exit;

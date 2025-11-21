@@ -1,86 +1,55 @@
 <?php
+session_start();
 include '../koneksi.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $nama     = trim($_POST['nama']);
-    $kategori = trim($_POST['kategori']);
-    $harga    = intval($_POST['harga']);
-    $stok     = intval($_POST['stok']);
-    $gambar   = '';
-
-    /* -----------------------------
-       VALIDASI & UPLOAD GAMBAR
-    ------------------------------ */
-    if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === 0) {
-
-        $folder = "../assets/img/";
-        $nama_file = uniqid() . "-" . basename($_FILES['gambar']['name']);
-        $lokasi = $folder . $nama_file;
-
-        // Ekstensi yang diizinkan
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-        $ext = strtolower(pathinfo($lokasi, PATHINFO_EXTENSION));
-
-        if (!in_array($ext, $allowed)) {
-            header("Location: tambah.php?status=tipe_file_salah");
-            exit;
-        }
-
-        // Pindahkan file
-        if (move_uploaded_file($_FILES['gambar']['tmp_name'], $lokasi)) {
-            $gambar = $nama_file;
-        }
-    }
-
-    /* -----------------------------
-       INSERT DATA (PREPARED STATEMENT)
-    ------------------------------ */
-    $query = "INSERT INTO cakes (nama, kategori, harga, stok, gambar) 
-              VALUES (?, ?, ?, ?, ?)";
-    $stmt = mysqli_prepare($koneksi, $query);
-    mysqli_stmt_bind_param($stmt, "ssiss", $nama, $kategori, $harga, $stok, $gambar);
-    mysqli_stmt_execute($stmt);
-
-    header("Location: index.php?status=sukses_tambah");
+if (!isset($_SESSION['username'])) {
+    header("Location: ../index.php");
     exit;
 }
 
-include '../includes/header.php';
+// Urutkan ID dari kecil ke besar
+$result = mysqli_query($koneksi, "SELECT * FROM customers ORDER BY id ASC");
 ?>
 
+<?php include '../includes/header.php'; ?>
+
 <div class="container-fluid px-4">
-    <h1 class="mt-4 mb-4">Tambah Kue</h1>
+    <h1 class="mt-4">Data Pelanggan</h1>
 
-    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow">
+    <a href="tambah.php" class="btn btn-primary mb-3">+ Tambah Pelanggan</a>
 
-        <div class="mb-3">
-            <label class="form-label">Nama Kue</label>
-            <input type="text" name="nama" class="form-control" required>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Telepon</th>
+                        <th>Alamat</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($c = mysqli_fetch_assoc($result)): ?>
+                    <tr>
+                        <td><?= $c['id'] ?></td>
+                        <td><?= $c['nama'] ?></td>
+                        <td><?= $c['email'] ?: '-' ?></td>
+                        <td><?= $c['phone'] ?></td>
+                        <td><?= $c['address'] ?></td>
+                        <td width="170">
+                            <a href="edit.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="hapus.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Hapus pelanggan ini?')">Hapus</a>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">Kategori</label>
-            <input type="text" name="kategori" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Harga</label>
-            <input type="number" name="harga" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Stok</label>
-            <input type="number" name="stok" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Gambar</label>
-            <input type="file" name="gambar" class="form-control">
-        </div>
-
-        <button type="submit" class="btn btn-primary mt-2">Simpan</button>
-    </form>
+    </div>
 </div>
 
 <?php include '../includes/footer.php'; ?>

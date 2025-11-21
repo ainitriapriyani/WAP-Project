@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($username) || empty($password)) {
         $error = "Username dan password tidak boleh kosong!";
     } else {
-        // Gunakan prepared statements untuk keamanan dari SQL Injection
         $query = "SELECT id, username, password FROM admin WHERE username = ?";
         $stmt = mysqli_prepare($koneksi, $query);
         mysqli_stmt_bind_param($stmt, "s", $username);
@@ -26,19 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $result = mysqli_stmt_get_result($stmt);
 
         if ($admin = mysqli_fetch_assoc($result)) {
-            // Verifikasi password yang diinput dengan hash di database
             if (password_verify($password, $admin['password'])) {
-                // Jika password cocok, login berhasil
                 $_SESSION['username'] = $admin['username'];
-                $_SESSION['admin_id'] = $admin['id']; // Simpan ID admin untuk fitur profil
+                $_SESSION['admin_id'] = $admin['id'];
                 header("Location: dashboard/");
                 exit();
             } else {
-                // Jika password tidak cocok
                 $error = "Username atau password salah!";
             }
         } else {
-            // Jika username tidak ditemukan
             $error = "Username atau password salah!";
         }
         mysqli_stmt_close($stmt);
@@ -51,14 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Cake Shop Management</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome untuk ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <style>
         body {
-            background-color: #f8f9fa; /* Warna abu-abu muda */
+            background-color: #f8f9fa;
         }
         .login-container {
             min-height: 100vh;
@@ -74,23 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         .login-card .card-header {
-            background-color: #e83e8c; /* Aksen pink/ungu pastel */
+            background-color: #e83e8c;
             color: white;
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
             text-align: center;
             padding: 1.5rem;
         }
-        .login-card .card-header h3 {
-            margin: 0;
-            font-weight: 300;
-        }
         .btn-login {
             background-color: #e83e8c;
             border-color: #e83e8c;
-            font-weight: bold;
-            padding: 0.75rem;
-            transition: all 0.3s ease;
         }
         .btn-login:hover {
             background-color: #d8357f;
@@ -108,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p class="mb-0">Admin Panel Login</p>
             </div>
             <div class="card-body p-4 p-md-5">
-                
+
                 <?php if (!empty($error)): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <?php echo $error; ?>
@@ -121,16 +107,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Masukkan username" required>
+                            <input type="text" class="form-control" id="username" name="username" required>
                         </div>
                     </div>
+
                     <div class="mb-4">
                         <label for="password" class="form-label">Password</label>
-                         <div class="input-group">
+                        <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password" required>
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                     </div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-login">Login</button>
                     </div>
@@ -140,8 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

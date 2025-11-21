@@ -1,64 +1,66 @@
 <?php
-// Debug opsional
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+session_start();
+include '../koneksi.php';
+
+if (!isset($_SESSION['username'])) {
+    header("Location: ../index.php");
+    exit;
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    include '../koneksi.php';
+    $nama    = trim($_POST['nama']);
+    $email   = trim($_POST['email']);
+    $telepon = trim($_POST['phone']);
+    $alamat  = trim($_POST['address']);
 
-    // Prevent SQL Injection
-    $nama    = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $alamat  = mysqli_real_escape_string($koneksi, $_POST['alamat']);
-    $telepon = mysqli_real_escape_string($koneksi, $_POST['telepon']);
+    $stmt = $koneksi->prepare("
+        INSERT INTO customers (nama, email, phone, address)
+        VALUES (?, ?, ?, ?)
+    ");
 
-    $query = "
-        INSERT INTO customers (nama, alamat, telepon)
-        VALUES ('$nama', '$alamat', '$telepon')
-    ";
+    $stmt->bind_param("ssss", $nama, $email, $telepon, $alamat);
+    $stmt->execute();
 
-    if (mysqli_query($koneksi, $query)) {
-        header("Location: index.php?status=sukses_tambah");
-        exit;
-    } else {
-        die("ERROR: " . mysqli_error($koneksi));
-    }
+    header("Location: index.php?status=sukses_tambah");
+    exit;
 }
 
 include '../includes/header.php';
 ?>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Tambah Pelanggan Baru</h1>
+<div class="container">
+    <h1 class="mt-4">Tambah Pelanggan</h1>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">Form Tambah Data Pelanggan</div>
-        <div class="card-body">
+    <div class="card shadow-sm p-4">
+        <form method="POST">
 
-            <form action="tambah.php" method="POST">
+            <div class="mb-3">
+                <label class="form-label">Nama</label>
+                <input type="text" name="nama" class="form-control" required>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Nama Pelanggan</label>
-                    <input type="text" class="form-control" name="nama" required>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Email (opsional)</label>
+                <input type="email" name="email" class="form-control">
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Alamat</label>
-                    <textarea class="form-control" name="alamat" rows="3" required></textarea>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Telepon</label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Nomor Telepon</label>
-                    <input type="text" class="form-control" name="telepon" required>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Alamat</label>
+                <textarea name="address" class="form-control" required></textarea>
+            </div>
 
-                <button type="submit" class="btn btn-primary">Simpan</button>
-                <a href="index.php" class="btn btn-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+            <a href="index.php" class="btn btn-secondary">Batal</a>
 
-            </form>
-
-        </div>
+        </form>
     </div>
 </div>
 
 <?php include '../includes/footer.php'; ?>
+    

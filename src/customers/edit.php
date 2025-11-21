@@ -1,36 +1,37 @@
 <?php
+session_start();
 include '../koneksi.php';
 
-// --- Ambil data ---
+if (!isset($_SESSION['username'])) {
+    header("Location: ../index.php");
+    exit;
+}
+
 $id = intval($_GET['id'] ?? 0);
 
-if ($id < 1) {
-    header("Location: index.php?status=id_tidak_valid");
+$result = mysqli_query($koneksi, "SELECT * FROM customers WHERE id=$id");
+$data = mysqli_fetch_assoc($result);
+
+if (!$data) {
+    header("Location: index.php?status=data_tidak_ditemukan");
     exit;
 }
 
-$result = mysqli_query($koneksi, "SELECT * FROM customers WHERE id = $id");
-$c = mysqli_fetch_assoc($result);
-
-if (!$c) {
-    header("Location: index.php?status=data_tidak_ada");
-    exit;
-}
-
-// --- Proses update ---
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $nama    = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $alamat  = mysqli_real_escape_string($koneksi, $_POST['alamat']);
-    $telepon = mysqli_real_escape_string($koneksi, $_POST['telepon']);
+    $nama    = trim($_POST['name']);
+    $email   = trim($_POST['email']);
+    $telepon = trim($_POST['phone']);
+    $alamat  = trim($_POST['address']);
 
-    $query = "
+    $stmt = $koneksi->prepare("
         UPDATE customers 
-        SET nama='$nama', alamat='$alamat', telepon='$telepon'
-        WHERE id=$id
-    ";
+        SET name=?, email=?, phone=?, address=?
+        WHERE id=?
+    ");
 
-    mysqli_query($koneksi, $query);
+    $stmt->bind_param("ssssi", $nama, $email, $telepon, $alamat, $id);
+    $stmt->execute();
 
     header("Location: index.php?status=sukses_edit");
     exit;
@@ -39,35 +40,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 include '../includes/header.php';
 ?>
 
-<div class="container-fluid px-4">
+<div class="container">
     <h1 class="mt-4">Edit Pelanggan</h1>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
+    <div class="card shadow-sm p-4">
 
-            <form method="POST">
+        <form method="POST">
 
-                <div class="mb-3">
-                    <label class="form-label">Nama</label>
-                    <input type="text" class="form-control" name="nama" value="<?= $c['nama'] ?>" required>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Nama</label>
+                <input type="text" name="name" class="form-control" value="<?= $data['name'] ?>" required>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Alamat</label>
-                    <textarea class="form-control" name="alamat" required><?= $c['alamat'] ?></textarea>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Email (opsional)</label>
+                <input type="email" name="email" class="form-control" value="<?= $data['email'] ?>">
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Telepon</label>
-                    <input type="text" class="form-control" name="telepon" value="<?= $c['telepon'] ?>" required>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Telepon</label>
+                <input type="text" name="phone" class="form-control" value="<?= $data['phone'] ?>" required>
+            </div>
 
-                <button type="submit" class="btn btn-primary">Update</button>
-                <a href="index.php" class="btn btn-secondary">Batal</a>
+            <div class="mb-3">
+                <label class="form-label">Alamat</label>
+                <textarea name="address" class="form-control" required><?= $data['address'] ?></textarea>
+            </div>
 
-            </form>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="index.php" class="btn btn-secondary">Batal</a>
 
-        </div>
+        </form>
+
     </div>
 </div>
 

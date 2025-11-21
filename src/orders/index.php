@@ -8,11 +8,25 @@ error_reporting(E_ALL);
 include '../includes/header.php';
 
 // Mengambil semua data pesanan dengan join ke tabel pelanggan
+// Mengambil semua data pesanan dengan join ke tabel pelanggan
+$where = "";
+
+if (isset($_GET['invoice']) && $_GET['invoice'] !== "") {
+    // Ambil angka saja (misal input "INV-00012" → 12)
+    $keyword = preg_replace("/\D/", "", $_GET['invoice']);
+    if ($keyword !== "") {
+        $where = "WHERE orders.id LIKE '%$keyword%'";
+    }
+}
+
 $query = "SELECT orders.id, customers.nama as customer_name, orders.tanggal, orders.total 
           FROM orders 
           JOIN customers ON orders.customer_id = customers.id 
-          ORDER BY orders.tanggal DESC, orders.id DESC";
+          $where
+          ORDER BY orders.id ASC";
+
 $result = mysqli_query($koneksi, $query);
+
 ?>
 
 <!-- Konten Utama -->
@@ -59,6 +73,11 @@ $result = mysqli_query($koneksi, $query);
     ?>
 
     <div class="card shadow-sm mb-4">
+  <div class="mb-3" style="max-width:300px;">
+    <input type="text" id="searchInvoice" class="form-control" 
+           placeholder="Cari invoice, nama, tanggal..." autocomplete="off">
+</div>
+
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>
                 <i class="fas fa-shopping-cart me-1"></i>
@@ -68,51 +87,86 @@ $result = mysqli_query($koneksi, $query);
                 <i class="fas fa-plus-circle"></i> Buat Pesanan Baru
             </a>
         </div>
+
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-center">ID Pesanan</th>
-                            <th>Nama Pelanggan</th>
+                            <th class="text-center">ID</th>
+                            <th class="text-center">Invoice</th>
+                            <th>Pelanggan</th>
                             <th>Tanggal</th>
                             <th>Total</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         <?php if (mysqli_num_rows($result) > 0) : ?>
                             <?php while ($order = mysqli_fetch_assoc($result)) : ?>
                                 <tr>
                                     <td class="text-center"><?= $order['id']; ?></td>
+
+                                    <!-- Kode Invoice -->
+                                    <td class="text-center">
+                                        <?= "INV-" . str_pad($order['id'], 5, "0", STR_PAD_LEFT); ?>
+                                    </td>
+
                                     <td><?= htmlspecialchars($order['customer_name']); ?></td>
                                     <td><?= date('d F Y', strtotime($order['tanggal'])); ?></td>
                                     <td>Rp <?= number_format($order['total'], 0, ',', '.'); ?></td>
+
                                     <td class="text-center">
-                                        <a href="detail.php?id=<?= $order['id']; ?>" class="btn btn-info btn-sm" title="Lihat Detail">
+                                        <a href="detail.php?id=<?= $order['id']; ?>" 
+                                           class="btn btn-info btn-sm" title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="edit.php?id=<?= $order['id']; ?>" class="btn btn-warning btn-sm" title="Edit">
+
+                                        <a href="edit.php?id=<?= $order['id']; ?>" 
+                                           class="btn btn-warning btn-sm" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="hapus.php?id=<?= $order['id']; ?>" class="btn btn-danger btn-sm" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Semua item terkait akan ikut terhapus.');">
+
+                                        <a href="hapus.php?id=<?= $order['id']; ?>" 
+                                           class="btn btn-danger btn-sm" 
+                                           title="Hapus"
+                                           onclick="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Semua item terkait akan ikut terhapus.');">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
+
                         <?php else : ?>
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Belum ada data pesanan.</td>
+                                <td colspan="6" class="text-center text-muted">Belum ada data pesanan.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
+
                 </table>
             </div>
         </div>
+        <script>
+// REALTIME SEARCH
+document.getElementById("searchInvoice").addEventListener("keyup", function () {
+    let keyword = this.value.toLowerCase();
+    let rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+        let text = row.innerText.toLowerCase();
+        
+        if (text.includes(keyword)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+</script>
+
     </div>
 </div>
 
-<!-- Menyertakan footer -->
 <?php include '../includes/footer.php'; ?>
-

@@ -1,117 +1,199 @@
 <?php
-// Memulai session dan menyertakan file-file penting
+// Debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// =====================================
+// SESSION & KONEKSI
+// =====================================
 session_start();
-include '../koneksi.php';
+require_once '../koneksi.php';
 include '../includes/header.php';
 
-
-// Cek jika pengguna tidak login, redirect ke halaman login
+// Cek login
 if (!isset($_SESSION['username'])) {
-    header("Location: ../index.php");
-    exit();
+    header("Location: ../login.php");
+    exit;
 }
 
-// Cek apakah ada ID di URL
+// Pastikan ID ada
 if (!isset($_GET['id'])) {
     header("Location: index.php");
-    exit();
+    exit;
 }
 
-$order_id = $_GET['id'];
+$order_id = intval($_GET['id']);
 
-// Query untuk mengambil detail pesanan utama
-$query_order = "SELECT orders.id, customers.nama AS customer_name, customers.alamat, customers.telepon, orders.tanggal, orders.total 
-                FROM orders 
-                JOIN customers ON orders.customer_id = customers.id 
-                WHERE orders.id = $order_id";
+// =====================
+// AMBIL DETAIL PESANAN (PERBAIKAN DISINI)
+// =====================
+$query_order = "
+    SELECT 
+        orders.id,
+        orders.tanggal,
+        orders.total,
+        orders.status,
+        orders.metode_pembayaran,
+        orders.catatan,
+        customers.nama AS customer_name,
+        customers.address,
+        customers.phone
+    FROM orders
+    JOIN customers ON customers.id = orders.customer_id
+    WHERE orders.id = $order_id
+";
+
 $result_order = mysqli_query($koneksi, $query_order);
 $order = mysqli_fetch_assoc($result_order);
 
-// Jika pesanan tidak ditemukan, redirect
 if (!$order) {
     header("Location: index.php");
-    exit();
+    exit;
 }
 
-// Query untuk mengambil item-item dalam pesanan
-$query_items = "SELECT cakes.nama AS cake_name, cakes.harga, order_items.jumlah, order_items.subtotal 
-                FROM order_items 
-                JOIN cakes ON order_items.cake_id = cakes.id 
-                WHERE order_items.order_id = $order_id";
+// =====================
+// AMBIL ITEM PESANAN
+// =====================
+$query_items = "
+    SELECT 
+        cakes.nama AS cake_name,
+        cakes.harga,
+        cakes.gambar AS cake_image,
+        order_items.jumlah,
+        order_items.subtotal
+    FROM order_items
+    JOIN cakes ON cakes.id = order_items.cake_id
+    WHERE order_items.order_id = $order_id
+";
+
+
 $result_items = mysqli_query($koneksi, $query_items);
+
+// Format ID menjadi INV-00001
+$invoice_no = "INV-" . str_pad($order['id'], 5, "0", STR_PAD_LEFT);
 ?>
 
-<!-- Konten Utama -->
 <div class="container-fluid px-4">
     <h1 class="mt-4">Detail Pesanan</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="../dashboard/index.php">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="index.php">Daftar Pesanan</a></li>
-        <li class="breadcrumb-item active">Detail Pesanan #<?php echo htmlspecialchars($order['id']); ?></li>
+        <li class="breadcrumb-item active"><?= $invoice_no ?></li>
     </ol>
 
     <div class="card shadow mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>
                 <i class="fas fa-receipt me-1"></i>
-                Faktur Pesanan #<?php echo htmlspecialchars($order['id']); ?>
+                Faktur Pesanan <?= $invoice_no ?>
             </span>
+            <!-- <a href="print.php?id=<?= $order_id ?>" class="btn btn-danger btn-sm" target="_blank">
+    <i class="fas fa-file-pdf me-1"></i> Download PDF
+</a> -->
+
             <a href="index.php" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i> Kembali
-            </a>
+            </a> 
         </div>
+
         <div class="card-body">
-            <!-- Informasi Pelanggan dan Pesanan -->
+
+            <!-- DATA PELANGGAN -->
             <div class="row mb-4">
                 <div class="col-md-6">
-                    <h5>Pelanggan:</h5>
-                    <p class="mb-1"><strong>Nama:</strong> <?php echo htmlspecialchars($order['customer_name']); ?></p>
-                    <p class="mb-1"><strong>Alamat:</strong> <?php echo htmlspecialchars($order['alamat']); ?></p>
-                    <p class="mb-1"><strong>Telepon:</strong> <?php echo htmlspecialchars($order['telepon']); ?></p>
+                    <h5>Data Pelanggan</h5>
+                    
+                    <p><strong>Nama:</strong> <?= htmlspecialchars($order['customer_name']); ?></p>
+
+                    <p><strong>Alamat:</strong> 
+                        <?= htmlspecialchars($order['address'] ?: '-'); ?>
+                    </p>
+
+                    <p><strong>Telepon:</strong> 
+                        <?= htmlspecialchars($order['phone'] ?: '-'); ?>
+                    </p>
+
                 </div>
+
                 <div class="col-md-6 text-md-end">
-                    <h5>Detail Pesanan:</h5>
-                    <p class="mb-1"><strong>ID Pesanan:</strong> #<?php echo htmlspecialchars($order['id']); ?></p>
-                    <p class="mb-1"><strong>Tanggal:</strong> <?php echo date('d F Y', strtotime($order['tanggal'])); ?></p>
+                    <h5>Informasi Pesanan</h5>
+                    <p><strong>ID Pesanan:</strong> <?= $invoice_no ?></p>
+                    <p><strong>Tanggal:</strong> <?= date("d F Y", strtotime($order['tanggal'])); ?></p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            <?php 
+                                echo ($order['status'] == 'Selesai' ? 'bg-success' :
+                                      ($order['status'] == 'Diproses' ? 'bg-primary' :
+                                      ($order['status'] == 'Dibatalkan' ? 'bg-danger' : 'bg-warning'))); 
+                            ?>">
+                            <?= htmlspecialchars($order['status']); ?>
+                        </span>
+                    </p>
+                    <!-- <p><strong>Metode Pembayaran:</strong> 
+                        <?= htmlspecialchars($order['metode_pembayaran']); ?>
+                    </p> -->
                 </div>
             </div>
 
-            <!-- Tabel Item Pesanan -->
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>No.</th>
-                            <th>Nama Kue</th>
-                            <th class="text-end">Harga Satuan</th>
-                            <th class="text-center">Jumlah</th>
-                            <th class="text-end">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $nomor = 1;
-                        while ($item = mysqli_fetch_assoc($result_items)) : ?>
-                            <tr>
-                                <td><?php echo $nomor++; ?></td>
-                                <td><?php echo htmlspecialchars($item['cake_name']); ?></td>
-                                <td class="text-end">Rp <?php echo number_format($item['harga'], 0, ',', '.'); ?></td>
-                                <td class="text-center"><?php echo htmlspecialchars($item['jumlah']); ?></td>
-                                <td class="text-end">Rp <?php echo number_format($item['subtotal'], 0, ',', '.'); ?></td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan="4" class="text-end fs-5">Total Pesanan</th>
-                            <th class="text-end fs-5">Rp <?php echo number_format($order['total'], 0, ',', '.'); ?></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            <!-- CATATAN -->
+            <?php if (!empty($order['catatan'])) : ?>
+                <div class="alert alert-info">
+                    <strong>Catatan Pelanggan:</strong><br>
+                    <?= nl2br(htmlspecialchars($order['catatan'])); ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- TABEL ITEM -->
+          <div class="table-responsive">
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>No.</th>
+                <th>Gambar</th>
+                <th>Nama Kue</th>
+                <th class="text-end">Harga</th>
+                <th class="text-center">Jumlah</th>
+                <th class="text-end">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+            $no = 1;
+            while ($item = mysqli_fetch_assoc($result_items)) : ?>
+            <tr>
+                <td><?= $no++; ?></td>
+
+                <!-- Gambar Produk (TANPA UBAH SQL) -->
+                <td>
+                   <?php 
+$img = !empty($item['cake_image']) ? $item['cake_image'] : 'default.png';
+?>
+<img src="../uploads/cakes/<?= htmlspecialchars($img); ?>"
+     alt="Foto Kue"
+     style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px;">
+
+                </td>
+
+                <td><?= htmlspecialchars($item['cake_name']); ?></td>
+                <td class="text-end">Rp <?= number_format($item['harga'], 0, ',', '.'); ?></td>
+                <td class="text-center"><?= $item['jumlah']; ?></td>
+                <td class="text-end">Rp <?= number_format($item['subtotal'], 0, ',', '.'); ?></td>
+            </tr>
+            <?php endwhile; ?>
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <th colspan="5" class="text-end fs-5">Total</th>
+                <th class="text-end fs-5">Rp <?= number_format($order['total'], 0, ',', '.'); ?></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
         </div>
     </div>
 </div>
 
-<!-- Menyertakan footer -->
 <?php include '../includes/footer.php'; ?>
